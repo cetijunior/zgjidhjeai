@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 const YourData = () => {
   const [userData, setUserData] = useState(null);
   const [additionalData, setAdditionalData] = useState(null);
-
+  // Fetch user profile data
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -29,7 +29,7 @@ const YourData = () => {
     };
     fetchUserData();
   }, []);
-
+  // Fetch additional data (files, aiAnswers, packages)
   useEffect(() => {
     const fetchAdditionalData = async () => {
       try {
@@ -55,10 +55,13 @@ const YourData = () => {
     };
     fetchAdditionalData();
   }, []);
-
+  const handleBackButton = () => {
+    window.history.back();
+  };
   return (
     <div>
       <h2>User Profile</h2>
+      <button onClick={handleBackButton}>Go back</button>
       {userData ? (
         <div>
           {userData.profilePictureUrl && (
@@ -103,10 +106,13 @@ const YourData = () => {
                 const isImage = /image/.test(file.fileInfo?.mimeType);
                 const isPDF = /pdf/.test(file.fileInfo?.mimeType);
                 return (
-                  <div key={file.id} style={{ marginBottom: "20px" }}>
+                  <div key={file._id} style={{ marginBottom: "20px" }}>
                     <p>
-                      <strong>{file.fileInfo?.originalName}</strong> (Uploaded
-                      on: {new Date(file.createdAt).toLocaleDateString()})
+                      <strong>
+                        {file.fileInfo?.originalName || "Unknown File"}
+                      </strong>{" "}
+                      (Uploaded on:{" "}
+                      {new Date(file.createdAt).toLocaleDateString()})
                     </p>
                     {isImage ? (
                       <img
@@ -176,27 +182,38 @@ const YourData = () => {
               additionalData.packages.map((pkg) => (
                 <div key={pkg.id} style={{ marginBottom: "20px" }}>
                   <p>
-                    <strong>{pkg.pdf.originalName}</strong> (Uploaded on:{" "}
-                    {new Date(pkg.createdAt).toLocaleDateString()})
+                    <strong>
+                      {pkg.pdf?.originalName || "Unknown Package"}
+                    </strong>{" "}
+                    (Uploaded on: {new Date(pkg.createdAt).toLocaleDateString()}
+                    )
                   </p>
-                  {pkg.pdf.mimeType.startsWith("image") ? (
+                  {pkg.pdf?.mimeType?.startsWith("image") ? (
                     <img
                       src={pkg.pdf.url}
                       alt={pkg.pdf.originalName}
                       style={{ width: "200px", height: "auto" }}
                     />
                   ) : (
-                    <iframe
-                      src={pkg.pdf.url}
-                      title={pkg.pdf.originalName}
-                      style={{ width: "100%", height: "500px", border: "none" }}
-                    />
+                    <object
+                      data={pkg.pdf?.url || ""}
+                      type="application/pdf"
+                      width="100%"
+                      height="100%"
+                    >
+                      <p>
+                        Alternative text - include a link{" "}
+                        <a href={pkg.pdf?.url || "#"}>to the PDF!</a>
+                      </p>
+                    </object>
                   )}
                   <p>
-                    <strong>Extracted Text:</strong> {pkg.extractedText}
+                    <strong>Extracted Text:</strong>{" "}
+                    {pkg.extractedText || "No extracted text available"}
                   </p>
                   <p>
-                    <strong>AI Solution:</strong> {pkg.aiSolution}
+                    <strong>AI Solution:</strong>{" "}
+                    {pkg.aiSolution || "No AI solution available"}
                   </p>
                 </div>
               ))
