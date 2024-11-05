@@ -5,22 +5,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
+    outDir: 'dist',
     rollupOptions: {
       output: {
         manualChunks: {
-          // Split vendor chunks
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': ['framer-motion', '@heroicons/react'],
-          'vendor-math': ['mathjs'],
-          'vendor-utils': ['axios'],
-        },
-      },
-    },
-    // Split chunks by size
-    chunkSizeWarningLimit: 500,
-    chunking: true,
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui': ['framer-motion', '@heroicons/react'],
+          'math': ['mathjs']
+        }
+      }
+    }
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
-  },
+  server: {
+    port: 3000
+  }
 })
