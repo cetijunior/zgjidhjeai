@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useMathOperations } from './useMathOperations';
+import { toast } from 'react-toastify';
 
 export const useCalculator = () => {
     const [input, setInput] = useState("");
@@ -8,16 +8,12 @@ export const useCalculator = () => {
     const [mode, setMode] = useState("Calculator");
     const [loading, setLoading] = useState(false);
 
-    const { evaluate, generateSteps, solveWithCohere } = useMathOperations();
-
     const handleInput = useCallback((value) => {
         setInput(prev => {
             switch (value) {
                 case "sin":
                 case "cos":
                 case "tan":
-                case "log":
-                case "ln":
                     return `${prev}${value}(`;
                 case "sqrt":
                     return `${prev}√(`;
@@ -29,34 +25,76 @@ export const useCalculator = () => {
                     return `${prev}e`;
                 case "!":
                     return prev ? `${prev}!` : "";
+                case "=":
+                    return prev;
                 default:
                     return prev + value;
             }
         });
     }, []);
 
+    const generateSteps = useCallback(async (input, finalResult) => {
+        try {
+            const { parse, simplify, derivative } = await import('mathjs');
+            const steps = [];
+            const expr = parse(input);
+            steps.push(`Original expression: ${expr.toString()}`);
+
+            if (expr.type === "OperatorNode") {
+                const simplified = simplify(expr);
+                if (simplified.toString() !== expr.toString()) {
+                    steps.push(`Simplified: ${simplified.toString()}`);
+                }
+            }
+
+            steps.push(`Final result: ${finalResult}`);
+            setSteps(steps);
+        } catch (error) {
+            console.error("Error generating steps:", error);
+            setSteps([]);
+        }
+    }, []);
+
     const handleSolve = async () => {
+        if (!input) {
+            toast.warning("Please enter an expression");
+            return;
+        }
+
         setLoading(true);
         try {
             if (mode === "Calculator") {
-                // Dynamically import mathjs only when needed
-                const { evaluate: mathEvaluate } = await import('mathjs');
-                const result = mathEvaluate(input);
+                const { evaluate } = await import('mathjs');
+                const result = evaluate(input);
                 setResult(result.toString());
-                setInput(result.toString());
-                generateSteps(input, result);
+                await generateSteps(input, result);
             } else {
-                await solveWithCohere(input);
+                // Word problem mode
+                toast.info("Word problem solving coming soon!");
             }
         } catch (error) {
-            toast.error("An error occurred while solving the problem.");
+            toast.error("Invalid expression");
             setResult("Error");
             setSteps([]);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
-    // ... other handlers
+    const handleClear = useCallback(() => {
+        setInput("");
+        setResult("");
+        setSteps([]);
+    }, []);
+
+    const handleBackspace = useCallback(() => {
+        setInput(prev => prev.slice(0, -1));
+    }, []);
+
+    const handleModeChange = useCallback((newMode) => {
+        setMode(newMode);
+        handleClear();
+    }, [handleClear]);
 
     return {
         mode,
@@ -64,14 +102,10 @@ export const useCalculator = () => {
         result,
         steps,
         loading,
-        handleModeChange: setMode,
+        handleModeChange,
         handleInput,
         handleSolve,
-        handleClear: () => {
-            setInput("");
-            setResult("");
-            setSteps([]);
-        },
-        handleBackspace: () => setInput(prev => prev.slice(0, -1))
+        handleClear,
+        handleBackspace,
     };
 };
