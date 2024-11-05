@@ -24,11 +24,6 @@ build/
 .env.test.local
 .env.production.local
 
-# Package files
-package-lock.json
-package.json
-yarn.lock
-pnpm-lock.yaml
 
 # Miscellaneous
 *.local
