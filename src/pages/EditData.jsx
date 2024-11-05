@@ -247,7 +247,7 @@ function EditData() {
   };
 
   return (
-    <div>
+    <div className="ml-52 my-10">
       <h2>Edit Data</h2>
       <button onClick={handleGoBack}>Go back</button>
       {/* Upload Package Form */}
